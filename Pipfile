@@ -17,6 +17,8 @@ pandas = "*"
 plotly = "*"
 sqlalchemy = "*"
 uvicorn = {extras = ["standard"], version = "*"}
+tweepy = "*"
+python-decouple = "*"
 
 [requires]
 python_version = "3"

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app import db, ml, viz
+from app import user
 
 description = """
 Edit your app's title and description. See [https://fastapi.tiangolo.com/tutorial/metadata/](https://fastapi.tiangolo.com/tutorial/metadata/)
@@ -21,9 +21,7 @@ app = FastAPI(
     docs_url='/',
 )
 
-app.include_router(db.router, tags=['Database'])
-app.include_router(ml.router, tags=['Machine Learning'])
-app.include_router(viz.router, tags=['Visualization'])
+app.include_router(user.router, tags=['Twitter Handle'])
 
 app.add_middleware(
     CORSMiddleware,
