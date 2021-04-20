@@ -1,273 +1,158 @@
-# DS Build Week scaffold
+# Lambda School TwitOff: Tweepy Development Assistance
 
-- [Big picture](#big-picture)
-- [Tech stack](#tech-stack)
-- [Getting started](#getting-started)
-- [File structure](#file-structure)
-- [More instructions](#more-instructions)
-- [Deploying to Heroku](#deploying-to-heroku)
-- [Example: Machine learning](#example-machine-learning)
+The purpose of this application is to assist students in the Lambda School Data Science curriculum who are having
+trouble obtaining Twitter Developer credentials for the Unit 3 _TwitOff_ application.
 
-## Big picture
+With the above credentials, we can obtain user-created Tweets using the `tweepy` package and render them at an endpoint
+as JSON for students to work with.
 
-Here's a template with starter code to deploy an API for your machine learning model and data visualizations.  You're encouraged (but not required) to use this template for your Build Week.
+### DISCLAIMER:
+The developer credentials used in this application are read-only and ***will not*** post Tweets to Twitter.
+The purpose of the _TwitOff_ application made in Unit 3 - Sprint 3 is to decide - using _Logistic Regression_ - who is
+more likely to say a user-created Tweet based on the last 200 Tweets of two or more Twitter users.
 
-You can deploy on Heroku in 10 minutes. Here's the template deployed as-is: [https://ds-bw-test.herokuapp.com/](https://ds-bw-test.herokuapp.com/)
+## [The Application](https://lambda-ds-twit-assist.herokuapp.com/)
 
-Instead of Flask, we'll use FastAPI. It's similar, but faster, with automatic interactive docs. For more comparison, see [FastAPI for Flask Users](https://amitness.com/2020/06/fastapi-vs-flask/).
+### Tech Stack
 
-## Tech stack
-- [FastAPI](https://fastapi.tiangolo.com/): Web framework. Like Flask, but faster, with automatic interactive docs.
-- [Flake8](https://flake8.pycqa.org/en/latest/): Linter, enforces PEP8 style guide.
-- [Heroku](https://devcenter.heroku.com/): Platform as a service, hosts your API.
-- [Pipenv](https://pipenv.pypa.io/en/latest/): Reproducible virtual environment, manages dependencies.
-- [Plotly](https://plotly.com/python/): Visualization library, for Python & JavaScript.
-- [Pytest](https://docs.pytest.org/en/stable/): Testing framework, runs your unit tests.
+This application uses _Python 3.8.5_ and is built using the _[FastAPI](fastapi.tiangolo.com)_ framework.  While we spent
+the entirety of Sprint 3 learning _[Flask](flask.palletsprojects.com)_, I decided FastAPI would be better in this
+scenario because the purpose of this application is to display user Tweets as JSON at an endpoint.
 
-## Getting started
+_[Tweepy](https://docs.tweepy.org/en/latest/)_ is used in this application - needing Twitter Developer credentials - to
+connect to the Twitter API, so we can obtain user Tweets.
 
-[Create a new repository from this template.](https://github.com/Lambda-School-Labs/ds-bw/generate)
+In order to deploy this application to _[Heroku](heroku.com)_, we need the assistance of an ASGI server called
+_[Uvicorn](https://www.uvicorn.org/)_.
 
-Clone the repo
+### Directory Structure
+
+---
 ```
-git clone https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPO-NAME.git
-
-cd YOUR-REPO-NAME
+├─ app                    → App Directory
+│   ├─ tests              → Tests (probably not needed - came with template)
+│   │    ├─ __init__.py
+│   │    └─ test_main.py
+│   │
+│   ├─ __init__.py
+│   ├─ main.py            → Main Application
+│   ├─ twitter.py         → Connects to Twitter API
+│   └─ user.py
+│
+├─ .gitignore
+├─ LICENSE
+├─ Pipfile
+├─ Procfile
+├─ README.md
+└─ requirements.txt
 ```
+---
 
-Install dependencies
-```
-pipenv install --dev
-```
+### How it Works:
 
-Activate the virtual environment
-```
-pipenv shell
-```
+The `twitter.py` file makes a call to the Twitter API for a user, and their Twitter timeline.
 
-Launch the app
-```
-uvicorn app.main:app --reload
-```
+At an endpoint, we take the pertinent info needed for our 
+_[Flask-SQLAlchemy ORM](https://flask-sqlalchemy.palletsprojects.com/en/2.x/)_ on the _TwitOff_ app end and build it
+into a dictionary to be rendered as JSON.
 
-Go to `localhost:8000` in your browser.
+In order to obtain any user, you only need to add the route `/user/` to the end of the Heroku URL in addition to the
+Twitter handle of any Twitter user.  For example, if we want Tweets by Elon Musk, we would need to type in the browser
+`/user/elonmusk` - try it out for yourself by following this
+[link](https://lambda-ds-twit-assist.herokuapp.com/user/elonmusk) (this app uses free Heroku Dynos therefore, the app
+could take a while to spin up), you may have to refresh the page if an empty list of Tweets is displayed.
 
-![image](https://user-images.githubusercontent.com/7278219/87965040-c18ba300-ca80-11ea-894f-d51a69d52f8a.png)
+#### _Side Note_:
 
-You'll see your API documentation:
+Even though I say you may need to refresh if you get an empty list of Tweets at the endpoint, if it remains empty, it is
+entirely possible that the user's last 200 entries of activity in their timeline have only been Retweets or replies to
+other Tweets.  In this case, __your user will not have any Tweets displayed at this endpoint and therefore, you should
+seek out another user__.
 
-- Your app's title, "DS API"
-- Your description, "Lorem ipsum"
-- An endpoint for POST requests, `/predict`
-- An endpoint for GET requests, `/viz/{statecode}`
+### What Should You Do Next?
 
-Click the `/predict` endpoint's green button.
+Now that we have the Tweets displayed as JSON at an endpoint, all one needs to do is use the `requests` package to
+obtain the text at that endpoint.  For simplicity's sake, I have included a script that will assist in doing this which
+I will explain afterwards.
 
-![image](https://user-images.githubusercontent.com/7278219/87965845-0532dc80-ca82-11ea-9690-b4c195a648d6.png)
+```python3
+import requests
+import ast
 
-You'll see the endpoint's documentation, including:
+from .model import DB, User, Tweet
 
-- Your function's docstring, """Make random baseline predictions for classification problem."""
-- Request body example, as [JSON](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON) (like a Python dictionary)
-- A button, "Try it out"
 
-Click the "Try it out" button.
+def get_user_and_tweets(username):
 
-![image](https://user-images.githubusercontent.com/7278219/87966677-39f36380-ca83-11ea-97f4-313bc11d3f19.png)
+    HEROKU_URL = 'https://lambda-ds-twit-assist.herokuapp.com/user/'
 
-The request body becomes editable. 
+    user = ast.literal_eval(requests.get(HEROKU_URL + username).text)
 
-Click the "Execute" button. Then scroll down.
+    try:
+        if User.query.get(user['twitter_handle']['id']):
+            db_user = User.query.get(user['twitter_handle']['id'])
+        else:
+            db_user = User(id=user['twitter_handle']['id'],
+                           name=user['twitter_handle']['username'])
+        DB.session.add(db_user)
 
-![image](https://user-images.githubusercontent.com/7278219/87966896-948cbf80-ca83-11ea-9740-d0801148b1f3.png)
-
-You'll see the server response, including:
-
-- [Code 200](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200), which means the request was successful.
-- The response body, as [JSON](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON), with random baseline predictions for a classification problem.
-
-***Your job is to replace these random predictions with real predictions from your model.*** Use this starter code and documentation to deploy your model as an API!
-
-## File structure
-
-```
-.
-└── app
-    ├── __init__.py
-    ├── db.py
-    ├── main.py
-    ├── ml.py
-    ├── viz.py
-    └── tests
-        ├── __init__.py
-        ├── test_main.py
-        └── test_predict.py
-```
-
-`app/main.py` is where you edit your app's title and description, which are displayed at the top of the your automatically generated documentation. This file also configures "Cross-Origin Resource Sharing", which you shouldn't need to edit. 
-
-- [FastAPI docs - First Steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
-- [FastAPI docs - Metadata](https://fastapi.tiangolo.com/tutorial/metadata/)
-- [FastAPI docs - CORS](https://fastapi.tiangolo.com/tutorial/cors/)
-
-`app/ml.py` defines the Machine Learning endpoint. `/predict` accepts POST requests and responds with random predictions. In a notebook, train your model and pickle it. Then in this source code file, unpickle your model and edit the `predict` function to return real predictions.
-
-- [Scikit-learn docs - Model persistence](https://scikit-learn.org/stable/modules/model_persistence.html)
-- [Keras docs - Serialization and saving](https://keras.io/guides/serialization_and_saving/)
-
-When your API receives a POST request, FastAPI automatically parses and validates the request body JSON, using the `Item` class attributes and functions. Edit this class so it's consistent with the column names and types from your training dataframe. 
-
-- [FastAPI docs - Request Body](https://fastapi.tiangolo.com/tutorial/body/)
-- [FastAPI docs - Field additional arguments](https://fastapi.tiangolo.com/tutorial/schema-extra-example/#field-additional-arguments)
-- [calmcode.io video - FastAPI - Json](https://calmcode.io/fastapi/json.html)
-- [calmcode.io video - FastAPI - Type Validation](https://calmcode.io/fastapi/type-validation.html)
-- [pydantic docs - Validators](https://pydantic-docs.helpmanual.io/usage/validators/)
-
-`app/tests/test_*.py` is where you edit your pytest unit tests. 
-
-- [FastAPI docs - Testing](https://fastapi.tiangolo.com/tutorial/testing/)
-- [calmcode.io videos - FastAPI - Testing](https://calmcode.io/fastapi/testing-one.html)
-- [calmcode.io videos - pytest](https://calmcode.io/pytest/introduction.html)
-
-## More instructions
-
-Activate the virtual environment
-```
-pipenv shell
+        for tweet in user['tweets']:
+            db_tweet = Tweet(id=tweet['id'], text=tweet['full_text'])
+            db_user.tweets.append(db_tweet)
+            DB.session.add(db_tweet)
+    except Exception as e:
+        raise e
+    else:
+        DB.session.commit()
 ```
 
-Install additional packages
-```
-pipenv install PYPI-PACKAGE-NAME
-```
+The process is put into a single function which accepts a username in the form of a Twitter handle (excluding the `@`)
 
-Launch a Jupyter notebook
-```
-jupyter notebook
-```
+As stated above, you need the `requests` package to get the text out of the endpoint however, since the JSON will be
+rendered in Python as a string, we will also use the `ast` library to 'de-stringify' the JSON and turn it back into a
+regular old Python dictionary.
 
-Run tests
-```
-pytest
-```
+Depending on the name of your script containing your Flask-SQLAlchemy ORM, you may need to change 
+`from .model import ...` to something else - convention for this course has always called the script `model.py` as well
+as use `DB` for the database, `User` and `Tweet` for the table names.
 
-Run linter
-```
-flake8
-```
+For those unfamiliar with sourcing a value from keys in a dictionary, the shorthand way of doing it is to type out the
+variable name for the `dict` object and put the name of the keys needed one at a time in square brackets.  For example,
+in our output below, we have some information on the Twitter user Lewis Black 
+([@TheLewisBlack](https://twitter.com/TheLewisBlack)):
 
-[calmcode.io videos - flake8](https://calmcode.io/flake8/introduction.html)
-
-## Deploying to Heroku
-
-Prepare Heroku
-```
-heroku login
-
-heroku create YOUR-APP-NAME-GOES-HERE
-
-heroku git:remote -a YOUR-APP-NAME-GOES-HERE
+```JSON
+{"twitter_handle":{"username":"TheLewisBlack","id":344955115}, "tweets": ...}
 ```
 
-Deploy to Heroku
-```
-git add --all
+To obtain the username and user ID from this nested dictionary, we would first use the key `"twitter_handle"` followed
+by the `"username"` or `"id"` as demonstrated below assuming it is contained in a variable called `userJSON`.
 
-git add --force Pipfile.lock
-
-git commit -m "Deploy to Heroku"
-
-git push heroku main:master
-
-heroku open
+```python3
+userJSON['twitter_handle']['username'] --> "TheLewisBlack"
+userJSON['twitter_handle']['id']       --> 344955115
 ```
 
-<small>(If you get a `Locking failed!` error when deploying to Heroku or running `pipenv install` then delete `Pipfile.lock` and try again, without `git add --force Pipfile.lock`)</small>
+### For the Flask Application
 
-Deactivate the virtual environment
-```
-exit
-```
+To start with, I would suggest adding the below to your Flask Application.
 
-## Example: Machine learning
-
-Follow the [getting started](#getting-started) instructions.
-
-Edit `app/main.py` to add your API `title` and `description`.
-
-```python
-app = FastAPI(
-    title='House Price DS API',
-    description='Predict house prices in California',
-    docs_url='/',
-)
+```python3
+@app.route('/user', methods=['GET'])
+def add_user():
+    twitter_handle = request.args['twitter_handle']
+    get_user_and_tweets(twitter_handle)
+    return 'User added'
 ```
 
-Edit `app/ml.py` to add a docstring for your predict function and return a naive baseline. 
+At the `/user` route in your browser, you can add a query string to input the username.  For example, to make a request
+to get Lewis Black's Tweets, you would type in your browser the route and query string:
+`/user?twitter_handle=TheLewisBlack`
 
-```python
-@router.post('/predict')
-async def predict(item: Item):
-    """Predict house prices in California."""
-    y_pred = 200000
-    return {'predicted_price': y_pred}
-```
+### Closing
 
-In a notebook, explore your data. Make an educated guess of what features you'll use.
+In the future, this application may be hosted elsewhere as we are using the free tier of Heroku and the application will
+sleep after a brief time of not using it.
 
-```python
-import pandas as pd
-from sklearn.datasets import fetch_california_housing
-
-# Load data
-california = fetch_california_housing()
-print(california.DESCR)
-X = pd.DataFrame(california.data, columns=california.feature_names)
-y = california.target
-
-# Rename columns
-X.columns = X.columns.str.lower()
-X = X.rename(columns={'avebedrms': 'bedrooms', 'averooms': 'total_rooms', 'houseage': 'house_age'})
-
-# Explore descriptive stats
-X.describe()
-```
-
-```python
-# Use these 3 features
-features = ['bedrooms', 'total_rooms', 'house_age']
-```
-
-Edit the class in `app/ml.py` to use your features.
-
-```python
-class House(BaseModel):
-    """Use this data model to parse the request body JSON."""
-    bedrooms: int
-    total_rooms: float
-    house_age: float
-
-    def to_df(self):
-        """Convert pydantic object to pandas dataframe with 1 row."""
-        return pd.DataFrame([dict(self)])
-
-@router.post('/predict')
-async def predict(house: House):
-    """Predict house prices in California."""
-    X_new = house.to_df()
-    y_pred = 200000
-    return {'predicted_price': y_pred}
-```
-
-Test locally, then [deploy to Heroku](#deploying-to-heroku) with your work-in-progress. Get to this point by the middle of Build Week. (By Wednesday lunch for full-time cohorts. By end of week one for part-time cohorts.) Now your web teammates can make POST requests to your API endpoint.
-
-In a notebook, train your pipeline and pickle it. See these docs:
-
-- [Scikit-learn docs - Model persistence](https://scikit-learn.org/stable/modules/model_persistence.html)
-- [Keras docs - Serialization and saving](https://keras.io/guides/serialization_and_saving/)
-
-Get version numbers for every package you used in your pipeline. [Install the exact versions of these packages](#more-instructions) in your virtual environment.
-
-Edit `app/ml.py` to unpickle your model and use it in your predict function. 
-
-Now you are ready to re-deploy! 🚀
+If there are any questions regarding this application or suggested fixes, feel free to make a Pull Request or email me
+at `james.barciz@lambdaschool.com`
