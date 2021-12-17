@@ -1,6 +1,6 @@
-# Lambda School TwitOff: Tweepy Development Assistance
+# BloomTech TwitOff: Tweepy Development Assistance
 
-The purpose of this application is to assist students in the Lambda School Data Science curriculum who are having
+The purpose of this application is to assist students in the BloomTech Data Science curriculum who are having
 trouble obtaining Twitter Developer credentials for the Unit 3 _TwitOff_ application.
 
 With the above credentials, we can obtain user-created Tweets using the `tweepy` package and render them at an endpoint
@@ -153,6 +153,3 @@ to get Lewis Black's Tweets, you would type in your browser the route and query 
 
 In the future, this application may be hosted elsewhere as we are using the free tier of Heroku and the application will
 sleep after a brief time of not using it.
-
-If there are any questions regarding this application or suggested fixes, feel free to make a Pull Request or email me
-at `james.barciz@lambdaschool.com`
