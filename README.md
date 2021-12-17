@@ -11,7 +11,7 @@ The developer credentials used in this application are read-only and ***will not
 The purpose of the _TwitOff_ application made in Unit 3 - Sprint 3 is to decide - using _Logistic Regression_ - who is
 more likely to say a user-created Tweet based on the last 200 Tweets of two or more Twitter users.
 
-## [The Application](https://lambda-ds-twit-assist.herokuapp.com/)
+## [The Application](https://bloomtech-ds-twit-assist.herokuapp.com/)
 
 ### Tech Stack
 
@@ -59,7 +59,7 @@ into a dictionary to be rendered as JSON.
 In order to obtain any user, you only need to add the route `/user/` to the end of the Heroku URL in addition to the
 Twitter handle of any Twitter user.  For example, if we want Tweets by Elon Musk, we would need to type in the browser
 `/user/elonmusk` - try it out for yourself by following this
-[link](https://lambda-ds-twit-assist.herokuapp.com/user/elonmusk) (this app uses free Heroku Dynos therefore, the app
+[link](https://bloomtech-ds-twit-assist.herokuapp.com/user/elonmusk) (this app uses free Heroku Dynos therefore, the app
 could take a while to spin up), you may have to refresh the page if an empty list of Tweets is displayed.
 
 #### _Side Note_:
@@ -84,7 +84,7 @@ from .model import DB, User, Tweet
 
 def get_user_and_tweets(username):
 
-    HEROKU_URL = 'https://lambda-ds-twit-assist.herokuapp.com/user/'
+    HEROKU_URL = 'https://bloomtech-ds-twit-assist.herokuapp.com/user/'
 
     user = ast.literal_eval(requests.get(HEROKU_URL + username).text)
 
